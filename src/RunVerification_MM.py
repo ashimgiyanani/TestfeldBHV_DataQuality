@@ -1,5 +1,5 @@
 # %% user modules
-%matplotlib qt
+# %matplotlib qt
 import pandas as pd
 import sys, os, glob
 sys.path.append(r"../../userModules")
@@ -80,7 +80,7 @@ try:
             pickle.dump(DF, f)
 except NameError:
     load_workspace('../data/VerificationData', globals())
-    print('except1')
+    print('Loading database from data folder')
 except:
     channel_paths = [
         '/AIRPORT/AD8_PROTOTYPE/GENERAL_DAQ/M0000_V1/600 s_mean',
@@ -91,6 +91,14 @@ except:
         '/AIRPORT/AD8_PROTOTYPE/GENERAL_DAQ/M0030_V4/600 s_mean',
         '/AIRPORT/AD8_PROTOTYPE/GENERAL_DAQ/M0040_V5/600 s_mean',
         '/AIRPORT/AD8_PROTOTYPE/GENERAL_DAQ/M0050_V6/600 s_mean',
+        '/AIRPORT/AD8_PROTOTYPE/WIND_CUBE/WC_115m_Wind_Direction/600 s',
+        '/AIRPORT/AD8_PROTOTYPE/WIND_CUBE/WC_115m_Wind_Speed/600 s',
+        '/AIRPORT/AD8_PROTOTYPE/WIND_CUBE/WC_115m_CNR/600 s',
+        '/AIRPORT/AD8_PROTOTYPE/WIND_CUBE/WC_115m_Data_Availability/600 s',
+        '/AIRPORT/AD8_PROTOTYPE/WIND_CUBE/WC_115m_Wind_Direction/600 s',
+        '/AIRPORT/AD8_PROTOTYPE/WIND_CUBE/WC_115m_Wind_Speed/600 s',
+        '/AIRPORT/AD8_PROTOTYPE/WIND_CUBE/WC_115m_CNR/600 s',
+        '/AIRPORT/AD8_PROTOTYPE/WIND_CUBE/WC_115m_Data_Availability/600 s',
         '/AIRPORT/AD8_PROTOTYPE/WIND_CUBE/WC_115m_Wind_Direction/600 s',
         '/AIRPORT/AD8_PROTOTYPE/WIND_CUBE/WC_115m_Wind_Speed/600 s',
         '/AIRPORT/AD8_PROTOTYPE/WIND_CUBE/WC_115m_CNR/600 s',
@@ -106,6 +114,14 @@ except:
         'mm_V4',
         'mm_V5',
         'mm_V6',
+        'wc_d115m',
+        'wc_V115m',
+        'wc_cnr115m',
+        'wc_Av115m',
+        'wc_d115m',
+        'wc_V115m',
+        'wc_cnr115m',
+        'wc_Av115m',
         'wc_d115m',
         'wc_V115m',
         'wc_cnr115m',
@@ -165,7 +181,6 @@ if Weibull== 1:
         df = pd.DataFrame(np.transpose([bin_center1, vals1, bin_center2, vals2]), columns = ['V1_bin_center', 'V1_pdf','V2_bin_center', 'V2_pdf'] )
         df.to_excel('Weibull_statistics.xlsx', sheet_name='Weibull_2019')
 
-#%% Saving workspace
 #%% scatter plot for Linear regression
 xx = u1
 yy = u2
@@ -209,38 +224,79 @@ ylab = '$u_{116 m} / u_{116 m,2}$ [-]'
 bin_means, bin_centers, ci, V_ratio, fig, ax = FnMastEffects(u_116m, u2, d1, xlab, ylab)
 
 # %% Comparison of 115m WindCube Data with corrected metmast data at 116m
-basic = [[340,30]]
-sectors=[[112,142], [287,317]]
+# filtering sectors
+basic = ((330,40),)
+sectors=((112,142), (287,317))
+default_sectors =((360,0),)
 
-cond2 = (pdData.wc_cnr115m >-17) & (pdData.wc_cnr115m<10) & (pdData.wc_cnr115m!=0)
-cond3 = (pdData.wc_Av115m > 95)
-cond4 = ((Vratio < 1.3) & (Vratio > 0.7))
-cond5 = (pdData.mm_D1 > basic[0][1]) & (pdData.mm_D1 < basic[0][0])   
+# filtering conditions
+cond2 = (pdData.wc_cnr115m >-17) & (pdData.wc_cnr115m<10) & (pdData.wc_cnr115m!=0) # cnr
+cond3 = (pdData.wc_Av115m > 95) # availability
+cond4 = ((Vratio < 1.3) & (Vratio > 0.7)) # met mast blockage effects
+cond5 = (pdData.mm_D1 > basic[0][1]) & (pdData.mm_D1 < basic[0][0])   # sector filtering
+cond55 = (pdData.wc_d115m > basic[0][1]) & (pdData.wc_d115m < basic[0][0])
+
+# inputs
 xx = pdData.wc_V115m[(cond2 & cond3 & cond4 & cond5)]
 wcd1 = pdData.wc_d115m[cond2 & cond3 & cond4 & cond5]
 d1 = pdData.mm_D1[cond2 & cond3 & cond4 & cond5]
 
+# linear regression between cup V1 and WindCube at 115m
 yy = u1[cond2 & cond3 & cond4]
-R_sq_wc_u1, m_wc_u1, c_wc_u1 = FnMastEffects_linreg(d1, xx, u1, sectors=sectors, xstr='$u_{115m,wc}$', ystr='$u_{116m,1}$')
+R_sq_wc_u1, m_wc_u1, c_wc_u1 = FnMastEffects_linreg(d1, xx, yy, sectors=sectors, xstr='$u_{115m,wc}$', ystr='$u_{116m,1}$')
 
+# linear regression between cup V2 and WindCube at 115m
 yy = u2[cond2 & cond3 & cond4]
-R_sq_wc_u2, m_wc_u2, c_wc_u2 = FnMastEffects_linreg(d1, xx, u2, sectors=sectors, xstr='$u_{115m,wc}$', ystr='$u_{116m,2}$')
+R_sq_wc_u2, m_wc_u2, c_wc_u2 = FnMastEffects_linreg(d1, xx, yy, sectors=sectors, xstr='$u_{115m,wc}$', ystr='$u_{116m,2}$')
 
+# linear regression between averaged cup and WindCube at 115m
 yy = u_116m[cond2 & cond3 & cond4 & cond5]
 Vratio = yy/xx
-R_sq_wc_u, m_wc_u, c_wc_u = FnMastEffects_linreg(d1, xx, yy, xstr='$u_{115m,wc}$', ystr='$u_{116m,avg}$', sectors=basic)
+R_sq_wc_u, m_wc_u, c_wc_u = FnMastEffects_linreg(d1, xx, yy, sectors=basic, xstr='$u_{115m,wc}$', ystr='$u_{116m,avg}$')
 
+# linear regression between the wind vane and WindCube at 115m
 from FnLinReg_wnddir import FnLinReg_wnddir
 xx = pdData.mm_D1
 yy = pdData.wc_d115m
-R_sq_wc_u, m_wc_u, c_wc_u = FnLinReg_wnddir(xx, yy, xstr='$Dir_{115m,mm}$', ystr='$Dir_{115m,wc}$')
-
+R_sq, m, c = FnLinReg_wnddir(xx, yy, xstr='$Dir_{115m,mm}$', ystr='$Dir_{115m,wc}$')
+R_sq_wc_u, m_wc_u, c_wc_u = FnMastEffects_linreg(d1, xx, yy, xx_range=(0,360), yy_range=(0, 360), 
+                                sectors = default_sectors, xstr='$Dir_{115m,mm}$', ystr='$Dir_{115m,wc}$')
 
 #%% comparison of wind speeds compared to the wind direction
-
-xlab= 'Vane wind direction$_{116 m}$ [°]'
+d1 = pdData.wc_d115m
+xx = pdData.wc_V115m
+yy = u_116m
+xlab= 'WindCube wind direction$_{116 m}$ [°]'
 ylab = '$u_{116 m,avg} / u_{115 m,wc}$ [-]'
 bin_means, bin_centers, ci, V_ratio, fig, ax = FnMastEffects(yy, xx, d1, xlab, ylab)
+
+#% comparison of WindCube and MM wind speeds wrt wind direction at 115m after filtering
+d1 = pdData.wc_d115m[cond2 & cond3 & cond5 & cond55]
+xx = pdData.wc_V115m[cond2 & cond3 & cond5 & cond55]
+yy = u_116m[cond2 & cond3 &cond5 & cond55]
+xlab= 'WindCube wind direction$_{116 m}$ [°]'
+ylab = '$u_{116 m,avg} / u_{115 m,wc}$ [-]'
+bin_means, bin_centers, ci, V_ratio, fig, ax = FnMastEffects(yy, xx, d1, xlab, ylab)
+
+#%% Comparison of wind speeds at 85m
+xx = pdData.mm_V3
+yy = pdData.mm_V3_2
+d1 = pdData.mm_D1
+
+# initial linear regression 
+R_sq, m, c = FnMastEffects_linreg(d1, xx, yy, xx_range=(2,25), yy_range=(2, 25), 
+                                sectors = default_sectors, xstr='$u_{85m,mm_1}$', ystr='$u_{85m,mm_2}$')
+
+# metmast effects
+xlab= 'wind direction$_{110 m}$ [°]'
+ylab = '$u_{85 m,1} / u_{85 m,2}$ [-]'
+bin_means, bin_centers, ci, V_ratio, fig, ax = FnMastEffects(xx, yy, d1, xlab, ylab)
+
+# second linear regression after filtering the metmast blockage effects
+# linear regression between cup V1 and WindCube at 115m
+from FnMastEffects_linreg import FnMastEffects_linreg
+yy = yy
+R_sq_wc_u1, m_wc_u1, c_wc_u1, x, y, d = FnMastEffects_linreg(d1, xx, yy, sectors=sectors, xstr='$u_{85m,mm_1}$', ystr='$u_{85m,mm_2}$')
 
 
 #%% Writing a report template
