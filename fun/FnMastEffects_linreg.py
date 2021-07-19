@@ -94,7 +94,8 @@ def FnMastEffects_linreg(d1, xx, yy, **kwargs):
     #  filtering the time series
     xx = xx[cond0 & np.logical_not(cond_mmb)]
     yy = yy[cond0 & np.logical_not(cond_mmb)]
-
+    d1 = d1[cond0 & np.logical_not(cond_mmb)]
+    
     #  getting least square regression coefficients
     from sklearn.linear_model import LinearRegression
     Yarr = np.asarray(yy).reshape(-1,1)

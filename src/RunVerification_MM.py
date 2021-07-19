@@ -1,5 +1,5 @@
 # %% user modules
-# %matplotlib qt
+%matplotlib qt
 import pandas as pd
 import sys, os, glob
 sys.path.append(r"../../userModules")
@@ -95,14 +95,6 @@ except:
         '/AIRPORT/AD8_PROTOTYPE/WIND_CUBE/WC_115m_Wind_Speed/600 s',
         '/AIRPORT/AD8_PROTOTYPE/WIND_CUBE/WC_115m_CNR/600 s',
         '/AIRPORT/AD8_PROTOTYPE/WIND_CUBE/WC_115m_Data_Availability/600 s',
-        '/AIRPORT/AD8_PROTOTYPE/WIND_CUBE/WC_115m_Wind_Direction/600 s',
-        '/AIRPORT/AD8_PROTOTYPE/WIND_CUBE/WC_115m_Wind_Speed/600 s',
-        '/AIRPORT/AD8_PROTOTYPE/WIND_CUBE/WC_115m_CNR/600 s',
-        '/AIRPORT/AD8_PROTOTYPE/WIND_CUBE/WC_115m_Data_Availability/600 s',
-        '/AIRPORT/AD8_PROTOTYPE/WIND_CUBE/WC_115m_Wind_Direction/600 s',
-        '/AIRPORT/AD8_PROTOTYPE/WIND_CUBE/WC_115m_Wind_Speed/600 s',
-        '/AIRPORT/AD8_PROTOTYPE/WIND_CUBE/WC_115m_CNR/600 s',
-        '/AIRPORT/AD8_PROTOTYPE/WIND_CUBE/WC_115m_Data_Availability/600 s',
     	]
 
     ch_names = [
@@ -114,14 +106,6 @@ except:
         'mm_V4',
         'mm_V5',
         'mm_V6',
-        'wc_d115m',
-        'wc_V115m',
-        'wc_cnr115m',
-        'wc_Av115m',
-        'wc_d115m',
-        'wc_V115m',
-        'wc_cnr115m',
-        'wc_Av115m',
         'wc_d115m',
         'wc_V115m',
         'wc_cnr115m',
@@ -243,23 +227,23 @@ d1 = pdData.mm_D1[cond2 & cond3 & cond4 & cond5]
 
 # linear regression between cup V1 and WindCube at 115m
 yy = u1[cond2 & cond3 & cond4]
-R_sq_wc_u1, m_wc_u1, c_wc_u1 = FnMastEffects_linreg(d1, xx, yy, sectors=sectors, xstr='$u_{115m,wc}$', ystr='$u_{116m,1}$')
+R_sq_wc_u1, m_wc_u1, c_wc_u1, _, _, _ = FnMastEffects_linreg(d1, xx, yy, sectors=sectors, xstr='$u_{115m,wc}$', ystr='$u_{116m,1}$')
 
 # linear regression between cup V2 and WindCube at 115m
 yy = u2[cond2 & cond3 & cond4]
-R_sq_wc_u2, m_wc_u2, c_wc_u2 = FnMastEffects_linreg(d1, xx, yy, sectors=sectors, xstr='$u_{115m,wc}$', ystr='$u_{116m,2}$')
+R_sq_wc_u2, m_wc_u2, c_wc_u2, _, _, _ = FnMastEffects_linreg(d1, xx, yy, sectors=sectors, xstr='$u_{115m,wc}$', ystr='$u_{116m,2}$')
 
 # linear regression between averaged cup and WindCube at 115m
 yy = u_116m[cond2 & cond3 & cond4 & cond5]
 Vratio = yy/xx
-R_sq_wc_u, m_wc_u, c_wc_u = FnMastEffects_linreg(d1, xx, yy, sectors=basic, xstr='$u_{115m,wc}$', ystr='$u_{116m,avg}$')
+R_sq_wc_u, m_wc_u, c_wc_u, _, _, _ = FnMastEffects_linreg(d1, xx, yy, sectors=basic, xstr='$u_{115m,wc}$', ystr='$u_{116m,avg}$')
 
 # linear regression between the wind vane and WindCube at 115m
 from FnLinReg_wnddir import FnLinReg_wnddir
 xx = pdData.mm_D1
 yy = pdData.wc_d115m
 R_sq, m, c = FnLinReg_wnddir(xx, yy, xstr='$Dir_{115m,mm}$', ystr='$Dir_{115m,wc}$')
-R_sq_wc_u, m_wc_u, c_wc_u = FnMastEffects_linreg(d1, xx, yy, xx_range=(0,360), yy_range=(0, 360), 
+R_sq_wc_u, m_wc_u, c_wc_u, _, _, _ = FnMastEffects_linreg(d1, xx, yy, xx_range=(0,360), yy_range=(0, 360), 
                                 sectors = default_sectors, xstr='$Dir_{115m,mm}$', ystr='$Dir_{115m,wc}$')
 
 #%% comparison of wind speeds compared to the wind direction
@@ -279,25 +263,95 @@ ylab = '$u_{116 m,avg} / u_{115 m,wc}$ [-]'
 bin_means, bin_centers, ci, V_ratio, fig, ax = FnMastEffects(yy, xx, d1, xlab, ylab)
 
 #%% Comparison of wind speeds at 85m
-xx = pdData.mm_V3
-yy = pdData.mm_V3_2
-d1 = pdData.mm_D1
+channel_paths = [
+    '/AIRPORT/AD8_PROTOTYPE/GENERAL_DAQ/M0070_D1/600 s_mean_polar',
+    '/AIRPORT/AD8_PROTOTYPE/GENERAL_DAQ/M0020_V3/600 s_mean',
+    '/AIRPORT/AD8_PROTOTYPE/GENERAL_DAQ/M0021_V3_2/600 s_mean',
+    '/AIRPORT/AD8_PROTOTYPE/WIND_CUBE/WC_84m_Wind_Direction/600 s',
+    '/AIRPORT/AD8_PROTOTYPE/WIND_CUBE/WC_84m_Wind_Speed/600 s',
+    '/AIRPORT/AD8_PROTOTYPE/WIND_CUBE/WC_84m_CNR/600 s',
+    '/AIRPORT/AD8_PROTOTYPE/WIND_CUBE/WC_84m_Data_Availability/600 s',
+    ]
+
+ch_names = [
+    'mm_D1',
+    'mm_V3',
+    'mm_V3_2',
+    'wc_d84m',
+    'wc_V84m',
+    'wc_cnr84m',
+    'wc_Av84m',
+    ]
+tstart = DT.datetime.strptime('2020-11-01_00-00-00', '%Y-%m-%d_%H-%M-%S') # Select start date in the form yyyy-mm-dd_HH-MM-SS
+tend = DT.datetime.strptime('2021-07-17_00-00-00', '%Y-%m-%d_%H-%M-%S') # Select start date in the form yyyy-mm-dd_HH-MM-SS
+sampleRate = [600]
+odc2, df2, t2 = FnImportOneDas(tstart, tend, channel_paths, ch_names, sampleRate[0], target_folder)
+
+xx = df2.mm_V3
+yy = df2.mm_V3_2
+d1 = df2.wc_d84m
 
 # initial linear regression 
-R_sq, m, c = FnMastEffects_linreg(d1, xx, yy, xx_range=(2,25), yy_range=(2, 25), 
-                                sectors = default_sectors, xstr='$u_{85m,mm_1}$', ystr='$u_{85m,mm_2}$')
+R_sq, m, c, x, y, d = FnMastEffects_linreg(d1, xx, yy, xx_range=(2,25), yy_range=(2, 25), 
+                                sectors = default_sectors, xstr='$u_{85m,mm_{V3}, 300^\circ}$', ystr='$u_{85m,mm_{V3_2}, 118^\circ}$')
 
 # metmast effects
-xlab= 'wind direction$_{110 m}$ [°]'
-ylab = '$u_{85 m,1} / u_{85 m,2}$ [-]'
+xlab= 'wind direction$_{85 m, wc}$ [°]'
+ylab = '$u_{85 m,V3} / u_{85 m,V3_2}$ [-]'
 bin_means, bin_centers, ci, V_ratio, fig, ax = FnMastEffects(xx, yy, d1, xlab, ylab)
 
 # second linear regression after filtering the metmast blockage effects
 # linear regression between cup V1 and WindCube at 115m
 from FnMastEffects_linreg import FnMastEffects_linreg
+sectors_85m = ((110, 145), (275, 315), (340,350))
 yy = yy
-R_sq_wc_u1, m_wc_u1, c_wc_u1, x, y, d = FnMastEffects_linreg(d1, xx, yy, sectors=sectors, xstr='$u_{85m,mm_1}$', ystr='$u_{85m,mm_2}$')
+R_sq_wc_u1, m_wc_u1, c_wc_u1, x, y, d = FnMastEffects_linreg(d1, xx, yy, sectors=sectors_85m, xstr='$u_{85m,mm_{V3}, 300^\circ}$', ystr='$u_{85m,mm_{V3_2}, 118^\circ}$')
+bin_means, bin_centers, ci, V_ratio, fig, ax = FnMastEffects(x, y, d, xlab, ylab)
 
+#%% averaged wind speed signal at 85m
+u_85m = (xx + yy)/2
+u_85m[(d1>=60) & (d1<=180)] = yy
+u_85m[(d1>=240) & (d1<=360)] = xx
+
+fig, ax = plt.subplots(3, 1, figsize=(10, 7))
+sns.scatterplot(ax = ax[0], x=df2.index, y=u_85m,  color='seagreen', marker='.',ci=None, label='corrected')
+sns.scatterplot(ax = ax[1], x=df2.index, y=xx,  color='blue', marker='.', label='$V3$')
+sns.scatterplot(ax = ax[2], x=df2.index, y=yy,  color='gray', marker='.', label='$V3_2$')
+ax = fig.axes
+plt.xlabel('Timestamp [10-min]',fontsize=Large)
+ax[0].set(ylabel='$u_{85m}$ [m/s]')
+ax[1].set(ylabel='$u_{85m,V3}$ [m/s]')
+ax[2].set(ylabel='$u_{85m,V3_2}$ [m/s]')
+# plt.axis(ymin=0.5,ymax=1.5,xmin=0, xmax=360)
+# plt.legend(fontsize=Small)
+# plt.yticks(fontsize=Small)
+# plt.xticks(fontsize=Small)
+# ax.xaxis.set_tick_params(rotation=25)
+plt.tight_layout()
+plt.show()
+
+# verify the correction
+xlab= 'wind direction$_{85 m}$ [°]'
+ylab = '$u_{85 m, V3} / u_{85 m,V3_2}$ [-]'
+bin_means, bin_centers, ci, V_ratio, fig, ax = FnMastEffects(u_85m, df2.wc_V84m, d1, xlab, ylab)
+
+#% comparison of WindCube and MM wind speeds wrt wind direction at 85m after filtering
+# filtering conditions
+cond2 = (df2.wc_cnr84m >-24) & (df2.wc_cnr84m<15) & (df2.wc_cnr84m!=0) # cnr
+cond3 = (df2.wc_Av84m > 25) # availability
+# cond4 = ((Vratio < 1.3) & (Vratio > 0.7)) # met mast blockage effects
+# cond5 = (df2.mm_D1 > basic[0][1]) & (df2.mm_D1 < basic[0][0])   # sector filtering
+# cond55 = (df2.wc_d84m > basic[0][1]) & (df2.wc_d84m < basic[0][0])
+
+d1 = df2.mm_D1[cond2 & cond3]
+xx = df2.wc_V84m[cond2 & cond3]
+yy = u_85m[cond2 & cond3]
+xlab= 'WindCube wind direction$_{84 m}$ [°]'
+ylab = '$u_{85 m,avg} / u_{84 m,wc}$ [-]'
+bin_means, bin_centers, ci, V_ratio, fig, ax = FnMastEffects(yy, xx, d1, xlab, ylab)
+
+R_sq_wc_u, m_wc_u, c_wc_u, _, _, _ = FnMastEffects_linreg(d1, xx, yy, sectors=basic, 
+                                                    xstr='$u_{84m,wc}$', ystr='$u_{85m,avg}$')
 
 #%% Writing a report template
 # tab1 = pd.DataFrame({"Configuration": ['Begin Date', 'End Date', 'x', 'y', 'N_total'],
