@@ -119,12 +119,30 @@ except:
 from FnWeibull import FnWeibull
 from FnWsRange import FnWsRange
 
+Weibull = 0
+windRose = 1
 u1 = pdData.mm_V1
 u2 = pdData.mm_V2
 d1 = pdData.mm_D1
-Weibull = 0
 flag = np.nan
 verbose=0
+
+#%% lay windrose over a map
+
+if windRose == 1:
+    from windrose import WindroseAxes, WindAxes
+    import matplotlib.cm as cm
+    uu = u1[(np.isfinite(d1) & np.isfinite(u1))]
+    wdir = d1[np.isfinite(d1) & np.isfinite(u1)]
+    bins = np.linspace(0,28,8)
+    deg = np.linspace(0,330, 12)
+    deg_str = [str(int(x))+'°' for x in deg]
+    deg_rolled = np.roll(np.linspace(330, 0, 12, dtype=int),-8)
+    fig = plt.figure(figsize=(8,6))
+    ax=WindroseAxes.from_ax()
+    ax.bar(wdir, uu,normed=True, opening=1, edgecolor='white', nsector=24, bins=bins)
+    ax.set_thetagrids(angles=deg, labels=deg_rolled)
+    ax.set_legend(loc='best')
 
 if Weibull== 1:
 
@@ -214,9 +232,9 @@ sectors=((112,142), (287,317))
 default_sectors =((360,0),)
 
 # filtering conditions
-cond2 = (pdData.wc_cnr115m >-17) & (pdData.wc_cnr115m<10) & (pdData.wc_cnr115m!=0) # cnr
-cond3 = (pdData.wc_Av115m > 95) # availability
-cond4 = ((Vratio < 1.3) & (Vratio > 0.7)) # met mast blockage effects
+cond2 = (pdData.wc_cnr115m >-24) & (pdData.wc_cnr115m<0) & (pdData.wc_cnr115m!=0) # cnr
+cond3 = (pdData.wc_Av115m > 50) # availability
+cond4 = ((Vratio < 1.2) & (Vratio > 0.8)) # met mast blockage effects
 cond5 = (pdData.mm_D1 > basic[0][1]) & (pdData.mm_D1 < basic[0][0])   # sector filtering
 cond55 = (pdData.wc_d115m > basic[0][1]) & (pdData.wc_d115m < basic[0][0])
 
@@ -255,12 +273,18 @@ ylab = '$u_{116 m,avg} / u_{115 m,wc}$ [-]'
 bin_means, bin_centers, ci, V_ratio, fig, ax = FnMastEffects(yy, xx, d1, xlab, ylab)
 
 #% comparison of WindCube and MM wind speeds wrt wind direction at 115m after filtering
-d1 = pdData.wc_d115m[cond2 & cond3 & cond5 & cond55]
-xx = pdData.wc_V115m[cond2 & cond3 & cond5 & cond55]
-yy = u_116m[cond2 & cond3 &cond5 & cond55]
-xlab= 'WindCube wind direction$_{116 m}$ [°]'
+Vratio = xx/yy
+cond4 = ((Vratio < 1.2) & (Vratio > 0.8)) # met mast blockage effects
+d1 = pdData.mm_D1[cond2 & cond3 & cond4 & cond5 & cond55]
+xx = pdData.wc_V115m[cond2 & cond3 & cond4 & cond5 & cond55]
+yy = u_116m[cond2 & cond3 & cond4 & cond5 & cond55]
+xlab= 'Vane wind direction$_{116 m}$ [°]'
 ylab = '$u_{116 m,avg} / u_{115 m,wc}$ [-]'
 bin_means, bin_centers, ci, V_ratio, fig, ax = FnMastEffects(yy, xx, d1, xlab, ylab)
+
+# linear regression after filtering the data
+R_sq, m, c, _, _, _ = FnMastEffects_linreg(d1,xx,yy,sectors=default_sectors, xstr='$u_{115m,wc}$', ystr='$u_{115m,mm}$')
+
 
 #%% Comparison of wind speeds at 85m
 channel_paths = [
@@ -289,21 +313,25 @@ odc2, df2, t2 = FnImportOneDas(tstart, tend, channel_paths, ch_names, sampleRate
 
 xx = df2.mm_V3
 yy = df2.mm_V3_2
-d1 = df2.wc_d84m
+d1 = df2.mm_D1
+
+# comparison of wind direction between 115m and 85m
+R_sq, m, c = FnLinReg_wnddir(d1, df2.wc_d84m, xstr='$Dir_{115m,mm}$', ystr='$Dir_{84m,wc}$')
+
 
 # initial linear regression 
 R_sq, m, c, x, y, d = FnMastEffects_linreg(d1, xx, yy, xx_range=(2,25), yy_range=(2, 25), 
                                 sectors = default_sectors, xstr='$u_{85m,mm_{V3}, 300^\circ}$', ystr='$u_{85m,mm_{V3_2}, 118^\circ}$')
 
 # metmast effects
-xlab= 'wind direction$_{85 m, wc}$ [°]'
+xlab= 'wind direction$_{115 m, mm}$ [°]'
 ylab = '$u_{85 m,V3} / u_{85 m,V3_2}$ [-]'
 bin_means, bin_centers, ci, V_ratio, fig, ax = FnMastEffects(xx, yy, d1, xlab, ylab)
 
 # second linear regression after filtering the metmast blockage effects
 # linear regression between cup V1 and WindCube at 115m
 from FnMastEffects_linreg import FnMastEffects_linreg
-sectors_85m = ((110, 145), (275, 315), (340,350))
+sectors_85m = ((110, 160), (275, 325), (350,360))
 yy = yy
 R_sq_wc_u1, m_wc_u1, c_wc_u1, x, y, d = FnMastEffects_linreg(d1, xx, yy, sectors=sectors_85m, xstr='$u_{85m,mm_{V3}, 300^\circ}$', ystr='$u_{85m,mm_{V3_2}, 118^\circ}$')
 bin_means, bin_centers, ci, V_ratio, fig, ax = FnMastEffects(x, y, d, xlab, ylab)
@@ -331,27 +359,31 @@ plt.tight_layout()
 plt.show()
 
 # verify the correction
-xlab= 'wind direction$_{85 m}$ [°]'
-ylab = '$u_{85 m, V3} / u_{85 m,V3_2}$ [-]'
+xlab= 'wind direction$_{115 m, mm}$ [°]'
+ylab = '$u_{85 m, V3} / u_{84 m,wc}$ [-]'
 bin_means, bin_centers, ci, V_ratio, fig, ax = FnMastEffects(u_85m, df2.wc_V84m, d1, xlab, ylab)
 
 #% comparison of WindCube and MM wind speeds wrt wind direction at 85m after filtering
 # filtering conditions
-cond2 = (df2.wc_cnr84m >-24) & (df2.wc_cnr84m<15) & (df2.wc_cnr84m!=0) # cnr
-cond3 = (df2.wc_Av84m > 25) # availability
-# cond4 = ((Vratio < 1.3) & (Vratio > 0.7)) # met mast blockage effects
+Vratio =  u_85m /df2.wc_V84m
+cond2 = (df2.wc_cnr84m >-24) & (df2.wc_cnr84m<10) & (df2.wc_cnr84m!=0) # cnr
+cond3 = (df2.wc_Av84m > 95) # availability
+cond4 = ((Vratio < 1.2) & (Vratio > 0.8)) # met mast blockage effects
 # cond5 = (df2.mm_D1 > basic[0][1]) & (df2.mm_D1 < basic[0][0])   # sector filtering
 # cond55 = (df2.wc_d84m > basic[0][1]) & (df2.wc_d84m < basic[0][0])
 
-d1 = df2.mm_D1[cond2 & cond3]
-xx = df2.wc_V84m[cond2 & cond3]
-yy = u_85m[cond2 & cond3]
-xlab= 'WindCube wind direction$_{84 m}$ [°]'
+d1 = df2.mm_D1[cond2 & cond3 & cond4]
+xx = df2.wc_V84m[cond2 & cond3 & cond4]
+yy = u_85m[cond2 & cond3 & cond4]
+xlab= 'wind vane wind direction$_{115 m}$ [°]'
 ylab = '$u_{85 m,avg} / u_{84 m,wc}$ [-]'
 bin_means, bin_centers, ci, V_ratio, fig, ax = FnMastEffects(yy, xx, d1, xlab, ylab)
 
-R_sq_wc_u, m_wc_u, c_wc_u, _, _, _ = FnMastEffects_linreg(d1, xx, yy, sectors=basic, 
+R_sq_wc_u, m_wc_u, c_wc_u, _, _, _ = FnMastEffects_linreg(d1, xx, yy, sectors=default_sectors, 
                                                     xstr='$u_{84m,wc}$', ystr='$u_{85m,avg}$')
+
+
+#%% 
 
 #%% Writing a report template
 # tab1 = pd.DataFrame({"Configuration": ['Begin Date', 'End Date', 'x', 'y', 'N_total'],

@@ -37,7 +37,7 @@ def FnMastEffects(u1, u2, d1, xlab, ylab):
     bin_centers = (bin_edges[0:-1] + bin_edges[1:])/2
     ci = np.nanstd(V_ratio)
 
-    fig, ax = plt.subplots(1, 1, figsize=(10, 5))
+    fig, ax = plt.subplots()
     sns.scatterplot(x=d1, y=V_ratio, color='seagreen', marker='.', ci=25, label='$u_1/u_2$')
     sns.lineplot(x=bin_centers, y=bin_means, color='darkgreen', lw=3, label='mean')
     ax = plt.gca()

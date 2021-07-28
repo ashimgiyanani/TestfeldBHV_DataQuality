@@ -112,6 +112,7 @@ def FnMastEffects_linreg(d1, xx, yy, **kwargs):
 
 ## seaborn regression plots
     import seaborn as sns
+    fig, ax = plt.subplots()
     sns.regplot(x=xx,y=yy,color='darkgreen',marker='.',ci=75, scatter_kws={'s':8, 'color':'seagreen'})
     plt.text(0.6*np.max(xx), 0.4*np.max(yy),'R^2={:.4f} (N={})'.format(R_sq, len(xx)), fontsize=Small)
     plt.text(0.6*np.max(xx), 0.3*np.max(yy),'y={:.4f}x + ({:.4f})'.format(np.float64(m), np.float64(c)), fontsize=Small)
