@@ -123,3 +123,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+*.csv
+*.xlsx
+results/
+.vscode/launch.json
+.vscode/settings.json
+bin/create-conda-env.sh
